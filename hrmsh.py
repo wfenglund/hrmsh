@@ -45,10 +45,15 @@ def colorize_output(in_list):
     out_list = [mkred(i) if i.endswith('.zip') or i.endswith('.gz') else i for i in out_list]
     return(out_list)
 
-def pipe_method(command):
+def pipe_method(command, placement = 'first'): # only first working
     first_cmd = ['do_' + command.pop(0), command]
     run_cmd = getattr(hrmsh, first_cmd.pop(0))
-    return subprocess.Popen(['echo', str(run_cmd('', first_cmd, True))], stdout = subprocess.PIPE) # run first command
+    if placement == 'first':
+        return subprocess.Popen(['echo', str(run_cmd('', first_cmd, True))], stdout = subprocess.PIPE)
+    elif placement == 'middle':
+        return subprocess.check_output((['echo', str(run_cmd('', first_cmd, True))], stdout = subprocess.PIPE)
+    elif placement == 'last':
+        return subprocess.check_output((['echo', str(run_cmd('', first_cmd, True))], stdout = subprocess.PIPE)
 
 def jamie(bagpipes):
     pipe_list = [i.strip().split() for i in bagpipes.split('|')]
@@ -60,10 +65,14 @@ def jamie(bagpipes):
         cmd_res = subprocess.Popen(first_cmd, stdout = subprocess.PIPE) # run first command
     for command in pipe_list:
         if 'do_' + command[0] in dir(hrmsh):
-            pipe_method(command)
+            cmd_res = pipe_method(command, placement = 'middle') # not working
         else:
             cmd_res = subprocess.Popen(command, stdin = cmd_res.stdout, stdout = subprocess.PIPE)
-    output = subprocess.check_output(final_cmd, stdin = cmd_res.stdout, universal_newlines = True)
+    if 'do_' + command[0] in dir(hrmsh):
+        output = subprocess.check_output(final_cmd, stdin = cmd_res.stdout, universal_newlines = True)
+    else:
+        cmd_res = pipe_method(command, placement = 'last') # not working
+
     print(output)
     return output
 
