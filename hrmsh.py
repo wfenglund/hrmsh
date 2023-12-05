@@ -7,9 +7,9 @@ import re
 import subprocess
 
 ### Internal packages:
-import hrmrc # for setting
+import hrmrc # for settings
 import hrmutils # for internal functions
-#import hrmtools # for shell functions
+import hrmtools # for shell functions
 
 ### Set:
 import hrmrc
@@ -32,11 +32,11 @@ def pipe_method(command, placement = 'first', standard_in = ''): # only first wo
     first_cmd = ['do_' + command.pop(0), command]
     run_cmd = getattr(hrmsh, first_cmd.pop(0))
     if placement == 'first':
-        return subprocess.Popen(['echo', str(run_cmd('', first_cmd, True))], stdout = subprocess.PIPE)
+        return subprocess.Popen(['echo', str(run_cmd(first_cmd, True))], stdout = subprocess.PIPE)
     elif placement == 'middle':
-        return subprocess.Popen(['echo', str(run_cmd('', first_cmd, True))], stdin = standard_in, stdout = subprocess.PIPE)
+        return subprocess.Popen(['echo', str(run_cmd(first_cmd, True))], stdin = standard_in, stdout = subprocess.PIPE)
     elif placement == 'last':
-        return subprocess.check_output(['echo', str(run_cmd('', first_cmd, True))], stdin = standard_in)
+        return subprocess.check_output(['echo', str(run_cmd(first_cmd, True))], stdin = standard_in)
 
 def jamie(bagpipes):
     pipe_list = [i.strip().split() for i in bagpipes.split('|')]
@@ -58,70 +58,14 @@ def jamie(bagpipes):
     print(output)
     return output
 
-### Classes:
+### Class:
 class hrmsh(cmd.Cmd):
-    def do_ls(self, line, stdout = False):
-        if type(line) != list:
-            line = line.split()
-        if type(line) == list and len(line) > 0:
-            if type(line[0]) == list:
-                line = sum(line, [])
-        listed = False
-        hidden = True
-        if len(line) == 0:
-            path = '.'
-        elif len(line) < 3:
-            if line[0].startswith('-'): # if command contains flags
-                if 'l' in line[0]:
-                    listed = True
-                if 'a' in line[0]:
-                    hidden = False
-                if len(line) == 1: # if command only contains flags
-                    path = '.'
-                elif len(line) == 2: # if command also contains path
-                    path = line[1]
-            else:
-                path = line[0]
-        else:
-            print("please supply one argument with or without flags")
-        
-        dir_list = hrmutils.list_items(path)
-        dir_list = sorted(dir_list, key = lambda s: s.lower())
-
-        if hidden == True:
-            dir_list = [i for i in dir_list if i.startswith('.') == False]
-        if listed == True and stdout == False:
-            dir_list = hrmutils.colorize_output(dir_list)
-            for item in dir_list:
-                print(item)
-        elif stdout == False:
-            print(dir_list)
-        else:
-            return dir_list
-        
     def do_cd(self, line, home = home):
         if len(line) == 0:
             os.chdir(home)
         else:
             os.chdir(line)
         setprompt()
-
-    def do_cat(self, line, stdout = False):
-        if type(line) != list:
-            line = line.split()
-        if type(line[0]) == list:
-            line = sum(line, [])
-        out_str = ''
-        if len(line) == 1:
-            with open(line[0], 'r') as file:
-                for line in file:
-                    if stdout == False:
-                        print(line.strip())
-                    out_str = out_str + line
-        return out_str
-
-    def do_cwd(self, line):
-        print(os.getcwd())
 
     def do_EOF(self, line):
         return(True)
@@ -190,19 +134,20 @@ class hrmsh(cmd.Cmd):
 ### Set initial prompt:
 setprompt()
 
-### Load shell functions:
-# generate methods for character shell:
-# for key in chsh_keys:
-#     def tmp_func(self, line, dictionary = chsh_dict):
-#         command = readline.get_history_item(readline.get_current_history_length())
-#         item = command.split(' ')[0]
-#         print(f'The value of \033[96m{item}\033[0m is \033[96m{dictionary[item]}\033[0m.')
-#     setattr(charshell, 'do_' + key, classmethod(tmp_func))
+### Load shell functions from module hrmtools:
+for func_name in dir(hrmtools):
+    if func_name.startswith('__') or func_name in ['os', 'hrmutils']:
+        pass
+    else:
+        func_cur = getattr(globals()['hrmtools'], func_name)
+        variables = getattr(func_cur, '__code__').co_varnames
+        if variables[0] == 'self' and variables[1] == 'line':
+            setattr(hrmsh, "do_" + func_name, classmethod(func_cur))
+        else:
+            print(hrmutils.mkred(f'Error: Function "{func_name}" not loaded: The first two arguments are not "self" and "line".'))
 
 ### Start shell:
 hrmsh().cmdloop()
 
 ### Issues:
-# update so that all functions can be piped (only ls and cat atm)
-# update so that not only the first command in pipe chain can be a method
 # add aliases
