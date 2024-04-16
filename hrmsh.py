@@ -7,13 +7,15 @@ import re
 import subprocess
 
 ### Internal packages:
-import hrmrc # for settings
 import hrmutils # for internal functions
 import hrmtools # for shell functions
 
-### Set:
+### Load user settings:
+home = os.getenv("HOME") + '/'
+if os.path.isfile(home + 'hrmrc.py') == False: # if hrmrc.py does not exist
+    open(home + '/hrmrc.py', 'a').close() # create hrmrc.py
+sys.path.insert(0, home)
 import hrmrc
-home = hrmrc.home()
 
 ### Shell functions:
 def setprompt(home = home):
@@ -142,6 +144,24 @@ for func_name in dir(hrmtools):
         func_cur = getattr(globals()['hrmtools'], func_name)
         variables = getattr(func_cur, '__code__').co_varnames
         if variables[0] == 'self' and variables[1] == 'line':
+            setattr(hrmsh, "do_" + func_name, classmethod(func_cur))
+        else:
+            print(hrmutils.mkred(f'Error: Function "{func_name}" not loaded: The first two arguments are not "self" and "line".'))
+
+### Load user functions from module hrmrc:
+for func_name in dir(hrmrc):
+    if func_name.startswith('__') or func_name in ['os', 'hrmutils']:
+        pass
+    else:
+        func_cur = getattr(globals()['hrmrc'], func_name)
+        variables = getattr(func_cur, '__code__').co_varnames
+        if len(variables) < 2:
+            if len(variables) == 1:
+                def wrap(self, line): func_cur(line)
+            if len(variables) == 0:
+                def wrap(self, line): func_cur()
+            setattr(hrmsh, "do_" + func_name, classmethod(wrap))
+        elif variables[0] == 'self' and variables[1] == 'line':
             setattr(hrmsh, "do_" + func_name, classmethod(func_cur))
         else:
             print(hrmutils.mkred(f'Error: Function "{func_name}" not loaded: The first two arguments are not "self" and "line".'))
