@@ -40,6 +40,18 @@ def pipe_method(command, placement = 'first', standard_in = ''): # only first wo
     elif placement == 'last':
         return subprocess.check_output(['echo', str(run_cmd(first_cmd, True))], stdin = standard_in)
 
+def read_alias(command):
+    cmd_list = command.split('|')
+    out_list = []
+    for part in cmd_list:
+        cmd = part.strip().split(' ')[0].strip()
+        if cmd in hrmrc.alias: # check if command is an alias
+            alias = hrmrc.alias[cmd]
+            part = part.replace(cmd, alias, 1)
+        out_list.append(part)
+    out_cmd = '|'.join(out_list)
+    return out_cmd
+
 def jamie(bagpipes):
     pipe_list = [i.strip().split() for i in bagpipes.split('|')]
     first_cmd = pipe_list.pop(0) # remove and save first command
@@ -79,19 +91,22 @@ class hrmsh(cmd.Cmd):
         pass
 
     def default(self, line):
+        cmd_list = self.lastcmd.split()
         banned_commands = ['rm', '******']
-        if self.lastcmd.split()[0] not in banned_commands:
+        if cmd_list[0] not in banned_commands:
             try:
-                subprocess.run(self.lastcmd.split())
+                subprocess.run(cmd_list)
             except Exception:
-                print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
-        elif self.lastcmd.split()[0] == '******':
+                print(f'Fail. "{cmd_list}" is not a valid or allowed command.')
+                #print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
+        elif cmd_list[0] == '******':
             pass
         else:
             print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
     
     def precmd(self, line):
         setprompt()
+        line = read_alias(line)
         if '|' in line: #potential bug if pipes are in commands for other reasons
             jamie(line)
             return '******'
@@ -150,7 +165,7 @@ for func_name in dir(hrmtools):
 
 ### Load user functions from module hrmrc:
 for func_name in dir(hrmrc):
-    if func_name.startswith('__') or func_name in ['os', 'hrmutils']:
+    if func_name.startswith('__') or func_name in ['os', 'hrmutils', 'alias']:
         pass
     else:
         func_cur = getattr(globals()['hrmrc'], func_name)
@@ -168,6 +183,3 @@ for func_name in dir(hrmrc):
 
 ### Start shell:
 hrmsh().cmdloop()
-
-### Issues:
-# add aliases
