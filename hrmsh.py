@@ -17,6 +17,12 @@ if os.path.isfile(home + 'hrmrc.py') == False: # if hrmrc.py does not exist
 sys.path.insert(0, home)
 import hrmrc
 
+### Try to import alias dictionary:
+try:
+    alias_dict = hrmrc.alias
+except AttributeError: # if dictionary does not exist
+    alias_dict = {}
+
 ### Shell functions:
 def setprompt(home = home):
     path = os.getcwd().replace(home, '~/')
@@ -45,8 +51,8 @@ def read_alias(command):
     out_list = []
     for part in cmd_list:
         cmd = part.strip().split(' ')[0].strip()
-        if cmd in hrmrc.alias: # check if command is an alias
-            alias = hrmrc.alias[cmd]
+        if cmd in alias_dict: # check if command is an alias
+            alias = alias_dict[cmd]
             part = part.replace(cmd, alias, 1)
         out_list.append(part)
     out_cmd = '|'.join(out_list)
@@ -183,7 +189,7 @@ for func_name in dir(hrmrc):
 
 ### Make user aliases tab completable:
 def tmp(): return "nothing"
-for key in hrmrc.alias:
+for key in alias_dict:
     if 'do_' + key not in dir(hrmsh):
         setattr(hrmsh, 'do_' + key, classmethod(tmp))
 
