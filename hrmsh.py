@@ -181,5 +181,11 @@ for func_name in dir(hrmrc):
         else:
             print(hrmutils.mkred(f'Error: Function "{func_name}" not loaded: The first two arguments are not "self" and "line".'))
 
+### Make user aliases tab completable:
+def tmp(): return "nothing"
+for key in hrmrc.alias:
+    if 'do_' + key not in dir(hrmsh):
+        setattr(hrmsh, 'do_' + key, classmethod(tmp))
+
 ### Start shell:
 hrmsh().cmdloop()
