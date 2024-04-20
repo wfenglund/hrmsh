@@ -17,11 +17,12 @@ if os.path.isfile(home + 'hrmrc.py') == False: # if hrmrc.py does not exist
 sys.path.insert(0, home)
 import hrmrc
 
-### Try to import alias dictionary:
+### Declare dictionaries:
 try:
     alias_dict = hrmrc.alias
 except AttributeError: # if dictionary does not exist
     alias_dict = {}
+variable_dict = {}
 
 ### Shell functions:
 def setprompt(home = home):
@@ -57,6 +58,22 @@ def read_alias(command):
         out_list.append(part)
     out_cmd = '|'.join(out_list)
     return out_cmd
+
+def read_variable(command):
+    if '\$' in command:
+        command = command.replace('\$', '$')
+        return command
+    elif '$' in command:
+        var_calls = re.findall('\$\w+', command)
+        for call in var_calls:
+            var = call.replace('$', '')
+            if var in variable_dict:
+                command = command.replace(call, variable_dict[var])
+            else:
+                return call
+        return command
+    else:
+        return command
 
 def jamie(bagpipes):
     pipe_list = [i.strip().split() for i in bagpipes.split('|')]
@@ -103,7 +120,7 @@ class hrmsh(cmd.Cmd):
             try:
                 subprocess.run(cmd_list)
             except Exception:
-                print(f'Fail. "{cmd_list}" is not a valid or allowed command.')
+                print(f'Fail. "{self.lastcmd}" is not a valid or allowed command or variable.')
                 #print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
         elif cmd_list[0] == '******':
             pass
@@ -113,9 +130,15 @@ class hrmsh(cmd.Cmd):
     def precmd(self, line):
         setprompt()
         line = read_alias(line)
+        line = read_variable(line)
         if '|' in line: #potential bug if pipes are in commands for other reasons
             jamie(line)
             return '******'
+        if re.search('^\w+\=".+"$', line.strip()):
+            key_dec = line.split('=')[0]
+            val_dec = line.split('=')[1].replace('"', '')
+            variable_dict[key_dec] = val_dec
+            line = '******'
         return line
 
     def completedefault(self, text, line, begidx, endidx):
