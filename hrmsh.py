@@ -75,6 +75,13 @@ def read_variable(command):
     else:
         return command
 
+def check_tilde(command):
+    if '~/' in command:
+        command = command.replace('~/', home)
+        return command
+    else:
+        return command
+
 def jamie(bagpipes):
     pipe_list = [i.strip().split() for i in bagpipes.split('|')]
     first_cmd = pipe_list.pop(0) # remove and save first command
@@ -127,8 +134,9 @@ class hrmsh(cmd.Cmd):
         else:
             print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
     
-    def precmd(self, line):
+    def precmd(self, line): #before command is run
         setprompt()
+        line = check_tilde(line)
         line = read_alias(line)
         line = read_variable(line)
         if '|' in line: #potential bug if pipes are in commands for other reasons
@@ -150,6 +158,8 @@ class hrmsh(cmd.Cmd):
                 return(hrmutils.list_items(line.split()[-1]))
         elif text == '..':
             return(['../'])
+        elif text == '__':
+            return([home])
         else:
             if '/' in line_list[-1] or './' in line_list[-1] or '../' in line_list[-1]:
                 path = re.sub('^(.*?)\/', '/', line_list[-1][::-1])[::-1]
@@ -168,6 +178,8 @@ class hrmsh(cmd.Cmd):
                 return([i for i in hrmutils.list_items(line.split()[-1]) if i.endswith('/')])
         elif text == '..':
             return(['../'])
+        elif text == '__':
+            return([home])
         else:
             if '/' in line_list[-1] or './' in line_list[-1] or '../' in line_list[-1]:
                 path = re.sub('^(.*?)\/', '/', line_list[-1][::-1])[::-1]
