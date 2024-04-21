@@ -128,7 +128,6 @@ class hrmsh(cmd.Cmd):
                 subprocess.run(cmd_list)
             except Exception:
                 print(f'Fail. "{self.lastcmd}" is not a valid or allowed command or variable.')
-                #print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
         elif cmd_list[0] == '******':
             pass
         else:
@@ -233,7 +232,6 @@ bin_binaries = os.listdir('/bin/')
 for binary in bin_binaries:
     if 'do_' + binary not in dir(hrmsh):
         setattr(hrmsh, 'do_' + binary + ' ', classmethod(tmp))
-
 
 ### Start shell:
 hrmsh().cmdloop()
