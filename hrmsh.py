@@ -6,9 +6,6 @@ import readline
 import re
 import subprocess
 
-### Set readline delimiter:
-readline.set_completer_delims(' ')
-
 ### Internal packages:
 import hrmutils # for internal functions
 import hrmtools # for shell functions
@@ -19,6 +16,10 @@ if os.path.isfile(home + 'hrmrc.py') == False: # if hrmrc.py does not exist
     open(home + '/hrmrc.py', 'a').close() # create hrmrc.py
 sys.path.insert(0, home)
 import hrmrc
+
+### readline settings:
+readline.set_completer_delims(' ')
+hrmhistory = home + '.hrmhistory'
 
 ### Declare dictionaries:
 try:
@@ -107,6 +108,10 @@ def jamie(bagpipes):
 
 ### Class:
 class hrmsh(cmd.Cmd):
+    def preloop(self): # before loop, read history file if it exists
+        if os.path.exists(hrmhistory):
+            readline.read_history_file(hrmhistory)
+
     def do_cd(self, line, home = home):
         if len(line) == 0:
             os.chdir(home)
@@ -197,6 +202,10 @@ class hrmsh(cmd.Cmd):
                 return [i for i in dir_list if part in i and i.endswith('/')]
             else:
                 return [i for i in hrmutils.list_items('.') if text in i and i.endswith('/')]
+    
+    def postloop(self): # after loop, write history file
+        readline.set_history_length(10000)
+        readline.write_history_file(hrmhistory)
 
 ### Set initial prompt:
 setprompt()
