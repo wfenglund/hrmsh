@@ -138,7 +138,6 @@ class hrmsh(cmd.Cmd):
                 subprocess.run(cmd_list)
             except Exception:
                 print(f'Fail. "{self.lastcmd}" is not a valid or allowed command or variable.')
-                #print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
         elif cmd_list[0] == '******':
             pass
         else:
