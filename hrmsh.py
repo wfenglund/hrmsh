@@ -228,5 +228,12 @@ for key in alias_dict:
     if 'do_' + key not in dir(hrmsh):
         setattr(hrmsh, 'do_' + key, classmethod(tmp))
 
+### Make everything in /bin/ tab completable:
+bin_binaries = os.listdir('/bin/')
+for binary in bin_binaries:
+    if 'do_' + binary not in dir(hrmsh):
+        setattr(hrmsh, 'do_' + binary + ' ', classmethod(tmp))
+
+
 ### Start shell:
 hrmsh().cmdloop()
