@@ -6,6 +6,9 @@ import readline
 import re
 import subprocess
 
+### Set readline delimiter:
+readline.set_completer_delims(' ')
+
 ### Internal packages:
 import hrmutils # for internal functions
 import hrmtools # for shell functions
@@ -157,7 +160,7 @@ class hrmsh(cmd.Cmd):
                 return(hrmutils.list_items(line.split()[-1]))
         elif text == '..':
             return(['../'])
-        elif text == '__':
+        elif text == '~/':
             return([home])
         else:
             if '/' in line_list[-1] or './' in line_list[-1] or '../' in line_list[-1]:
@@ -177,7 +180,7 @@ class hrmsh(cmd.Cmd):
                 return([i for i in hrmutils.list_items(line.split()[-1]) if i.endswith('/')])
         elif text == '..':
             return(['../'])
-        elif text == '__':
+        elif text == '~/':
             return([home])
         else:
             if '/' in line_list[-1] or './' in line_list[-1] or '../' in line_list[-1]:
