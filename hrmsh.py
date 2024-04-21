@@ -120,6 +120,13 @@ class hrmsh(cmd.Cmd):
     def do_q(self, line):
         return(True)
 
+    def completenames(self, text, *ignored):
+        pos_cmds = [i.replace('do_', '') for i in self.get_names() if i.startswith('do_' + text)]
+        if len(pos_cmds) <= 50:
+            return pos_cmds
+        else:
+            return pos_cmds[0:50]
+
     def emptyline(self):
         pass
 
@@ -131,6 +138,7 @@ class hrmsh(cmd.Cmd):
                 subprocess.run(cmd_list)
             except Exception:
                 print(f'Fail. "{self.lastcmd}" is not a valid or allowed command or variable.')
+                #print(f'Fail. "{self.lastcmd}" is not a valid or allowed command.')
         elif cmd_list[0] == '******':
             pass
         else:
